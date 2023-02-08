@@ -1,0 +1,9 @@
+testHandler:
+  handler: src/functions/test-handler/index.handler
+  memorySize: 512
+  description: Test scaffolding handler
+  events:
+    - http:
+        path: test/{patientId}
+        method: post
+        cors: true
