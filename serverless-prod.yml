@@ -1,6 +1,6 @@
 service: honeydew-patient-service
 
-frameworkVersion: ">=2.0.0"
+frameworkVersion: ">=3.1.0"
 
 provider:
   name: aws
@@ -10,10 +10,6 @@ provider:
   profile: ApiGatewayLambdaServiceUser
   timeout: 30
   lambdaHashingVersion: 20201221
-  environment:
-    PATIENTS_TABLE: ${self:service}-table-${self:provier.stage}
-    PATIENT_NOTES_TABLE: ${self:service}-notes-table-${self:provier.stage}
-    ENVIRONMENT: PRODUCTION
   iamRoleStatements:
     - Effect: Allow
       Action:

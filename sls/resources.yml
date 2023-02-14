@@ -10,7 +10,7 @@ Resources:
       KeySchema:
         - AttributeName: "id"
           KeyType: "HASH"
-      TableName: ${self:provider.environment.PATIENTS_TABLE}
+      TableName: ${file(./sls/variables.yml):${self:provider.stage}.PATIENTS_TABLE}
   PatientNotesDynamoDbTable:
     Type: "AWS::DynamoDB::Table"
     DeletionPolicy: Retain
@@ -26,4 +26,4 @@ Resources:
           KeyType: "HASH"
         - AttributeName: "noteId"
           KeyType: "RANGE"
-      TableName: ${self:provider.environment.PATIENT_NOTES_TABLE}
+      TableName: ${file(./sls/variables.yml):${self:provider.stage}.PATIENT_NOTES_TABLE}

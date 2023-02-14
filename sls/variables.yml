@@ -1,0 +1,8 @@
+test:
+  PATIENTS_TABLE: honeydew-patient-service-table-test
+  PATIENT_NOTES_TABLE: honeydew-patient-service-notes-table-test
+  ENVIRONMENT: TEST
+prod:
+  PATIENTS_TABLE: honeydew-patient-service-table-prod
+  PATIENT_NOTES_TABLE: honeydew-patient-service-notes-table-prod
+  ENVIRONMENT: PRODUCTION
