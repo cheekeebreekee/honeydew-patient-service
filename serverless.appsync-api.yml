@@ -1,0 +1,115 @@
+name: PatientAppsync
+schema: schema.api.graphql
+authenticationType: AMAZON_COGNITO_USER_POOLS
+userPoolConfig:
+  awsRegion: us-west-2
+  defaultAction: ALLOW
+  userPoolId: !Ref CognitoUserPool
+mappingTemplatesLocation: mapping-templates
+mappingTemplates:
+  # QUERIES
+  - type: Query
+    field: getMyProfile
+    dataSource: patientsTable
+  - type: Query
+    field: getMyAppointments
+    dataSource: appointmentsTable
+  - type: Query
+    field: getPatientAppointments
+    dataSource: appointmentsTable
+  - type: Query
+    field: getPatient
+    dataSource: patientsTable
+  - type: Query
+    field: getPatients
+    dataSource: patientsTable
+  - type: Query
+    field: getPatientByEmail
+    dataSource: patientsTable
+  - type: Query
+    field: getMyImages
+    dataSource: imagesTable
+  - type: Query
+    field: getPatientImages
+    dataSource: imagesTable
+  - type: Query
+    field: getNotesByPatient
+    dataSource: notesTable
+  - type: Query
+    field: getNotesByCreator
+    dataSource: notesTable
+  - type: Query 
+    field: getPresignedUrl
+    dataSource: getPresignedUrlFunction
+    request: false
+    response: false
+
+
+
+  # MUTATIONS 
+  # - type: Mutation
+  #   field: editMyProfile
+  #   dataSource: patientsTable
+  - type: Mutation
+    field: createAppointment
+    dataSource: createAppointmentFunction
+    request: false
+    response: false
+  - type: Mutation
+    field: changeAppointmentStatus
+    dataSource: appointmentsTable
+  - type: Mutation
+    field: createNote
+    dataSource: createNoteFunction
+    request: false
+    response: false
+  - type: Mutation
+    field: setPatientStatus
+    dataSource: patientsTable
+  - type: Mutation
+    field: createPatientActionItem
+    dataSource: patientsTable
+  - type: Mutation
+    field: setMeetingLink
+    dataSource: appointmentsTable
+
+  
+
+  # NESTED FIELDS
+
+
+dataSources:
+  - type: NONE
+    name: None
+  - type: AMAZON_DYNAMODB
+    name: patientsTable
+    config:
+      tableName: !Ref PatientsTable
+  - type: AMAZON_DYNAMODB
+    name: appointmentsTable
+    config:
+      tableName: !Ref AppointmentsTable
+  - type: AMAZON_DYNAMODB
+    name: notesTable
+    config:
+      tableName: !Ref NotesTable
+  - type: AMAZON_DYNAMODB
+    name: imagesTable
+    config:
+      tableName: !Ref PatientImagesTable
+  - type: AWS_LAMBDA
+    name: createAppointmentFunction
+    config:  
+      functionName: createAppointment
+  - type: AWS_LAMBDA
+    name: getPresignedUrlFunction
+    config:  
+      functionName: getPresignedUrl
+  - type: AWS_LAMBDA
+    name: createNoteFunction
+    config:  
+      functionName: createNote
+
+
+
+

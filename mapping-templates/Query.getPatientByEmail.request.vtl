@@ -1,0 +1,14 @@
+{
+  "version" : "2018-05-29",
+  "operation" : "Query",
+  "query" : {
+    "expression" : "email = :email",
+    "expressionValues" : {
+      ":email" : $util.dynamodb.toDynamoDBJson($context.arguments.email)
+    }
+  },
+  "index": "byEmail",
+  "select" : "ALL_ATTRIBUTES"
+}
+
+

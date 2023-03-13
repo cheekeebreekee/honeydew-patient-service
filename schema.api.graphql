@@ -1,0 +1,395 @@
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+type Query {
+  getMyProfile: MyProfile!
+  getMyAppointments(limit: Int, nextToken: String): AppointmentPage!
+  getPatientAppointments(patientId: String!, limit: Int, nextToken: String): AppointmentPage!
+  getPatient(patientId: String): Patient! # probably we will need separate method for getting full patient info (appointments, followups etc.)
+  getPatients(limit: Int!, nextToken: String): PatientPage!
+  getPatientByEmail(email: String!): Patient!
+  getMyImages: ImagesPage!
+  getPatientImages(patientId: String!): ImagesPage!
+  # getImages(imageIds: [String]!): ImagesPage!  # is this passed by the frontend, because we can nest this into other queries
+  getNotesByPatient(patientId: String!, limit: Int, nextToken: String): NotesPage!
+  getNotesByCreator(creatorId: String!, limit: Int, nextToken: String): NotesPage!
+  getPresignedUrl(fileName: String!, fileType: String!): String!
+}
+
+type Mutation {
+  createAppointment(newAppointment: AppointmentInput!): Appointment!
+  # addAppointmentStatus was renamed to changeAppointmentStatus
+  changeAppointmentStatus(appointmentStatus: AppointmentStatusInput!): Appointment
+  createNote(newNote: NoteInput!): Note!
+  archivePatient(patientId: String!): Patient!  # this is a status of the patient - active, deliquent, archived, newPatient, etc.
+  deletePatient(patientId: String!): Patient!  # Do we need this?  What happens to the record of the patients notes/appointments?
+  createPatient(patient: PatientInput): Patient! # we will use the confirm user signup lambda to create the patient/ account service will create an account for the patient
+  setPatientStatus(patientId: String!, status: String!): Patient! # this is a status of the patient - active, deliquent, archived, newPatient, etc.
+
+  #changeContactedFlag --> will be probably generalized to setFlag
+  #markAsFirstLogin --> will be probably generalized to setFlag
+  #markAsNotifiedAboutFillMedBackground --> will be probably generalized to setFlag
+  #markAsNotifiedAboutUpcomingFollowUp --> will be probably generalized to setFlag
+  #markAsPinned --> will be probably generalized to setFlag
+  #markAsRewardedForReferral --> will be probably generalized to setFlag
+  #markLastTreatmentPlanAsRead --> will be probably generalized to setFlag
+  #setCardSavedFlag --> will be probably generalized to setFlag
+  #reassignEmployees --> will be a part of employee-service
+  #has - TODO ???
+  #TODO: create a plan in lucid chart for how we will handle the different types of action items and flags
+  # change following line to createPatientActionItem -> action item will be things like "patient needs ", "send email", "send text", "send reminder", "send follow up", "send treatment plan", "send prescription", "send refill request", "send refill reminder", "send refill confirmation", "send refill denial", "send refill approval", "send refill shipped", "send refill delivered", "send refill received", "send refill expired", "send refill cancelled", "send refill returned", "send refill returned t
+  # change following line to createGeneralActionItem -> action item will be things like "call patient", "send email", "send text", "send reminder", "send follow up", "send treatment plan", "send prescription", "send refill request", "send refill reminder", "send refill confirmation", "send refill denial", "send refill approval", "send refill shipped", "send refill delivered", "send refill received", "send refill expired", "send refill cancelled", "send refill returned", "send refill returned t
+  setFlag(patientId: String, flag: String, value: Boolean): Patient!   
+  createPatientActionItem(patientId: String, actionItems: [String]!): Patient!  
+  setMeetingLink(appointmentId: String, meetingLink: String): Appointment
+  setTreatmentPlan(followUpId: String, treatmentPlan: TreatmentPlanInput): TreatmentPlan!
+  #updateChatInitTime --> need to think what to do with it
+  #updateChatTime --> need to think what to do with it
+  updateInsuranceInfo(patientId: String, insuranceInfo: PatientInsuranceInfoInput): Patient!
+  updateMedicalBackgroundInfo(
+    patientId: String
+    medicalBackgroundInfo: PatientMedicalBackgroundInput
+  ): Patient!
+  #updateMembershipNotificationStatus --> need to think what to do with it
+  #updateMultiAccList --> probably will be deprecated and moved to account service
+  updateName(patientId: String, name: String): Patient!  # change patient info  -> subscribe to propoganda
+  #updateNoShowStatus --> will be probably generalized to setFlag
+  #updateParams --> probably will be generalized to updateMedicalBackgroundInfo
+  updatePaymentInfo(accountId: String, paymentInfo: PaymentInfoInput): Patient!    # CHECK! # this will listen to stripe events and update the payment info
+  updateShippingInfo(patientId: String, shippingInfo: ShippingInfoInput): Patient!  # move to change patient info
+  #updateUpcomingAppointmentNotificationStatus - TODO
+  #updateWithSkinSurveyAnswers - TODO
+  #upsertWithCalendlyData - TODO
+}
+
+# created by should not be its own type, we will have a creator field in the note type
+# input NoteCreatedByInput {
+#   id: String!
+#   role: String!
+# }
+
+input NoteInput {
+  creatorId: ID!
+  creatorRole: String!
+  text: String!
+  type: String!
+  patientId: ID!
+}
+
+input TreatmentPlanInput {
+  instructions: String
+  medicineKey: String
+  refillExpirationDate: String
+  refillsCount: String
+  specialInstructions: String
+}
+
+input PaymentInput {
+  id: String!
+  currency: String
+  amount: Float
+  createdAt: AWSDateTime
+}
+
+input AppointmentInput {
+  patientId: ID
+  startTime: AWSDateTime!
+  endTime: AWSDateTime!
+  status: String
+  cancelReason: String
+  providerId: ID
+  note: String,
+  service: String
+}
+
+input PaymentInfoInput {
+  cardSaved: String
+  payment: PaymentInput
+}
+
+input AppointmentStatusInput {
+  appointmentId: ID!
+  status: String!
+  cancelReason: String
+}
+
+input PatientMedicalBackgroundInput {
+  sex: String
+  height: String
+  weight: String
+  dateOfBirth: String
+  zipCode: String
+  skinSurvey: [PatientMedicalBackgroundSkinSurveyInput]
+}
+
+input PatientMedicalBackgroundSkinSurveyInput {
+  id: String
+  answer: String
+}
+
+input ShippingInfoInput {
+  city: String
+  state: String
+  zipCode: String
+  firstName: String
+  lastName: String
+  addressLine1: String
+  addressLine2: String
+}
+
+input PatientInsuranceInfoInput {
+  insuranceName: String
+  policyHolderName: String
+  groupNumber: String
+  memberId: String
+}
+
+input PatientInput {
+  id: ID!
+  accountId: ID!
+  appointmentId: ID!
+  phone: String
+  email: String
+  referralId: String
+  careTeam: [PatientCareTeamInput]
+  parentInfo: PatientParentInfoInput
+  medicalBackground: PatientMedicalBackgroundInput
+  shippingInfo: ShippingInfoInput
+  insurance: PatientInsuranceInfoInput
+  timezone: String
+  membership: PatientMembershipInput
+  scheduleLink: String
+  isAccutane: Boolean! # consider to move to flags
+  # flags(contains flags for different purposes)
+}
+
+input PatientCareTeamInput {
+  id: String
+  role: String
+}
+
+input PatientMembershipInput {
+  type: String
+  notificationLevel: Int
+  isActive: Boolean!
+  createdAt: AWSDateTime
+}
+
+input PatientParentInfoInput {
+  email: String
+  phone: String
+  name: String
+}
+
+type MyProfile {
+    name: String
+}
+
+type NoteCreatedBy {
+  id: String!
+  role: String!
+}
+
+type Appointment {
+  patientId: ID! #HASH
+  appointmentId: ID! #RANGE
+  createdAt: AWSDateTime!
+  startTime: AWSDateTime!
+  endTime: AWSDateTime!
+  status: String
+  cancelReason: String
+  note: String
+  service: String
+  payment: Payment
+  providerId: ID
+  meetingLink: String
+}
+
+type SkinImage {
+  id: String!
+  tag: String!
+  label: String!
+  fileName: String!
+}
+
+type FollowUpQuestionarie {
+  id: String!
+  answer: String
+}
+
+type FollowUpHistory {
+  id: String!
+  role: String
+  action: String
+  createdAt: String
+}
+
+type TreatmentPlan {
+  instructions: String
+  medicineKey: String
+  refillExpirationDate: String
+  refillsCount: String
+  specialInstructions: String
+}
+
+type FollowUp {
+  patientId: ID! #HASH
+  followUpId: ID! #RANGE
+  providerId: String!
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+  skinImages: [SkinImage]
+  followUpQuestionarie: [FollowUpQuestionarie]
+  nextFollowUpDate: AWSDateTime!
+  message: String!
+  history: [FollowUpHistory]
+  treatmentPlans: [TreatmentPlan]
+}
+
+type FollowUpPage {
+  followUps: [FollowUp!]
+  nextToken: String
+}
+
+type Payment {
+  id: String!
+  currency: String
+  amount: Float
+  createdAt: AWSDateTime
+}
+
+
+type PaymentInfo {
+  cardSaved: String
+  payments: [Payment]
+}
+
+type AccountPatient {
+  id: String!
+}
+
+type Account {
+  id: ID!
+  customerId: String!
+  conversationId: String!
+  email: String
+  paymentInfo: PaymentInfo
+  patients: [AccountPatient]
+  chatInfo: String #TODO
+}
+
+type Note {
+  noteId: ID! #HASH,
+  creatorId: ID! 
+  creatorRole: String,
+  createdAt: AWSDateTime!,
+  updatedAt: AWSDateTime!,
+  lastModifiedBy: ID!,
+  text: String!,
+  type: String,
+  patientId: ID!
+  appointmentId: ID
+}
+
+type PatientCareTeam {
+  id: String
+  role: String
+}
+
+type PatientParentInfo {
+  email: String
+  phone: String
+  name: String
+}
+
+type PatientMedicalBackgroundSkinSurvey {
+  id: String
+  answer: String
+}
+
+type PatientMedicalBackground {
+  sex: String
+  height: String
+  weight: String
+  dateOfBirth: String
+  zipCode: String
+  skinSurvey: [PatientMedicalBackgroundSkinSurvey]
+}
+
+type ShippingInfo {
+  city: String
+  state: String
+  zipCode: String
+  firstName: String
+  lastName: String
+  addressLine1: String
+  addressLine2: String
+}
+
+type PatientMembership {
+  type: String
+  notificationLevel: Int
+  isActive: Boolean!
+  createdAt: AWSDateTime
+}
+
+type PatientInsuranceInfo {
+  insuranceName: String
+  policyHolderName: String
+  groupNumber: String
+  memberId: String
+}
+
+type Patient {
+  patientId: ID!
+  accountId: ID
+  # appointmentId: ID  # patient can have multiple appointments, so it should be moved to Appointment
+  phone: String
+  email: String
+  referralId: String
+  careTeam: [PatientCareTeam]
+  parentInfo: PatientParentInfo
+  medicalBackground: PatientMedicalBackground
+  shippingInfo: ShippingInfo
+  insurance: PatientInsuranceInfo
+  timezone: String
+  membership: PatientMembership
+  scheduleLink: String
+  isAccutane: Boolean! # consider to move to flags
+  status: String
+  actionItems: [String]
+  # flags(contains flags for different purposes)
+}
+
+type Images {
+    patientId: ID! #HASH
+    imageId: ID! #RANGE
+    createdAt: AWSDateTime!
+    updatedAt: AWSDateTime!
+    imagePath: String!
+    tag: String
+    label: String
+    fileName: String
+}
+
+type PatientPage {
+  patients: [Patient!]
+  nextToken: String
+}
+
+type AppointmentPage {
+  appointments: [Appointment!]
+  nextToken: String
+}
+
+type ImagesPage {
+  images: [Images!]
+  nextToken: String
+}
+
+type NotesPage {
+  notes: [Note!]
+  nextToken: String
+}

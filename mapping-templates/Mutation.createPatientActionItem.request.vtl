@@ -1,0 +1,16 @@
+{
+    "version" : "2018-05-29",
+    "operation" : "UpdateItem",
+    "key": {
+        "patientId": $util.dynamodb.toDynamoDBJson($context.arguments.patientId)
+    },
+    "update" : {
+        "expression" : "set #actionItems = list_append(#actionItems, :actionItems)",
+        "expressionNames" : {
+           "#actionItems" : "actionItems"
+       },
+       "expressionValues" : {
+            ":actionItems" : $util.dynamodb.toDynamoDBJson($context.arguments.actionItems),
+       }
+    }
+}

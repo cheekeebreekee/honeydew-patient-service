@@ -1,0 +1,16 @@
+{
+    "version" : "2018-05-29",
+    "operation" : "UpdateItem",
+    "key": {
+        "appointmentId": $util.dynamodb.toDynamoDBJson($context.arguments.appointmentId)
+    },
+    "update" : {
+        "expression" : "set #meetingLink = :meetingLink",
+        "expressionNames" : {
+           "#meetingLink" : "meetingLink"
+       },
+       "expressionValues" : {
+            ":meetingLink" : $util.dynamodb.toDynamoDBJson($context.arguments.meetingLink)
+       }
+    }
+}

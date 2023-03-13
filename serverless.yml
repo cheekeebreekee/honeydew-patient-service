@@ -1,0 +1,285 @@
+service: patient-service
+frameworkVersion: '3'
+
+plugins:
+ - serverless-appsync-plugin
+ - serverless-iam-roles-per-function
+ - serverless-manifest-plugin
+ - serverless-plugin-include-dependencies
+ - serverless-plugin-log-retention
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: dev
+  region: us-west-2
+  profile: honeydewdev
+  environment:
+    STAGE: ${self:custom.stage}
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
+
+package:
+  exclude:
+    - package-lock.json
+    - package.json
+  excludeDevDependencies: false
+
+custom:
+  region: ${opt:region, self:provider.region}
+  stage: ${opt:stage, self:provider.stage}
+  appSync:
+    - ${file(serverless.appsync-api.yml)}
+  logRetentionInDays: 7
+
+functions:
+  confirmUserSignup:
+    handler: functions/confirm-user-signup.handler
+    environment:
+      PATIENTS_TABLE: !Ref PatientsTable
+      APPOINTMENTS_TABLE: !Ref AppointmentsTable
+    iamRoleStatements:
+      - Effect: Allow
+        Action: dynamodb:PutItem
+        Resource: !GetAtt PatientsTable.Arn
+      - Effect: Allow
+        Action: dynamodb:PutItem
+        Resource: !GetAtt AppointmentsTable.Arn
+
+  createAppointment:
+    handler: functions/create-appointment.handler
+    environment:
+      APPOINTMENTS_TABLE: !Ref AppointmentsTable
+      NOTES_TABLE: !Ref NotesTable
+    iamRoleStatements:
+      - Effect: Allow
+        Action: dynamodb:PutItem
+        Resource: !GetAtt AppointmentsTable.Arn
+      - Effect: Allow
+        Action: dynamodb:PutItem
+        Resource: !GetAtt NotesTable.Arn
+
+  createNote:
+    handler: functions/create-note.handler
+    environment:
+      NOTES_TABLE: !Ref NotesTable
+    iamRoleStatements:
+      - Effect: Allow
+        Action: dynamodb:PutItem
+        Resource: !GetAtt NotesTable.Arn
+
+  getPresignedUrl:
+    handler: functions/get-presigned-url.handler
+    environment:
+      BUCKET_NAME: !Ref PatientImagesBucket
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - s3:PutObject
+          - s3:PutObjectAcl
+        Resource: !Sub ${PatientImagesBucket.Arn}/*
+
+  s3ImagesListener:
+    handler: functions/s3-images-listener.handler
+    environment:
+      IMAGES_TABLE: !Ref PatientImagesTable
+      BUCKET_NAME: !Ref PatientImagesBucket
+      REGION: ${self:provider.region}
+    iamRoleStatements:
+      - Effect: Allow
+        Action: dynamodb:PutItem
+        Resource: !GetAtt PatientImagesTable.Arn
+      - Effect: Allow
+        Action:
+          - s3:GetObject
+          - s3:GetObjectAcl
+        Resource: !Sub ${PatientImagesTable.Arn}/*
+    events: 
+     - eventBridge:
+          pattern:
+            source:
+              - aws.s3
+            detail-type:
+              - Object Created
+            detail:
+              bucket:
+                name:
+                  - honeydew-patient-images
+
+resources:
+  Resources:
+    CognitoUserPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        AutoVerifiedAttributes:
+          - email
+        Policies:
+          PasswordPolicy:
+            MinimumLength: 8
+            RequireLowercase: false
+            RequireNumbers: false
+            RequireUppercase: false
+            RequireSymbols: false
+        UsernameAttributes:
+          - email
+        Schema:
+          - AttributeDataType: String
+            Name: name
+            Required: false
+            Mutable: true
+        LambdaConfig:
+          PostConfirmation: !GetAtt ConfirmUserSignupLambdaFunction.Arn
+
+    UserPoolInvokeConfirmUserSignupLambdaPermission:
+      Type: AWS::Lambda::Permission
+      Properties:
+        Action: lambda:invokeFunction
+        FunctionName: !Ref ConfirmUserSignupLambdaFunction
+        Principal: cognito-idp.amazonaws.com
+        SourceArn: !GetAtt CognitoUserPool.Arn
+
+    WebUserPoolClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+        UserPoolId: !Ref CognitoUserPool
+        ClientName: web
+        ExplicitAuthFlows:
+          - ALLOW_USER_SRP_AUTH
+          - ALLOW_USER_PASSWORD_AUTH
+          - ALLOW_REFRESH_TOKEN_AUTH
+        PreventUserExistenceErrors: ENABLED
+
+    PatientsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        BillingMode: PAY_PER_REQUEST
+        KeySchema:
+          - AttributeName: patientId
+            KeyType: HASH
+        AttributeDefinitions:
+          - AttributeName: patientId
+            AttributeType: S
+          - AttributeName: email
+            AttributeType: S
+        GlobalSecondaryIndexes:
+          - IndexName: byEmail
+            KeySchema:
+              - AttributeName: email
+                KeyType: HASH
+              - AttributeName: patientId
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+        Tags:
+          - Key: Environment
+            Value: ${self:custom.stage}
+          - Key: Name
+            Value: patient-table
+
+    PatientImagesTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        BillingMode: PAY_PER_REQUEST
+        KeySchema:
+          - AttributeName: imageId
+            KeyType: HASH
+        AttributeDefinitions:
+          - AttributeName: imageId
+            AttributeType: S
+          - AttributeName: patientId
+            AttributeType: S
+        GlobalSecondaryIndexes:
+          - IndexName: byPatientId
+            KeySchema:
+              - AttributeName: patientId
+                KeyType: HASH
+              - AttributeName: imageId
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+        Tags:
+          - Key: Environment
+            Value: ${self:custom.stage}
+          - Key: Name
+            Value: images-table
+
+    AppointmentsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        BillingMode: PAY_PER_REQUEST
+        KeySchema:
+          - AttributeName: appointmentId
+            KeyType: HASH
+        AttributeDefinitions:
+          - AttributeName: appointmentId
+            AttributeType: S
+          - AttributeName: patientId
+            AttributeType: S
+        GlobalSecondaryIndexes:
+          - IndexName: byPatientId
+            KeySchema:
+              - AttributeName: patientId
+                KeyType: HASH
+              - AttributeName: appointmentId
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+        Tags:
+          - Key: Environment
+            Value: ${self:custom.stage}
+          - Key: Name
+            Value: appointments-table
+
+    NotesTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        BillingMode: PAY_PER_REQUEST
+        KeySchema:
+          - AttributeName: noteId
+            KeyType: HASH
+        AttributeDefinitions:
+          - AttributeName: noteId
+            AttributeType: S
+          - AttributeName: patientId
+            AttributeType: S
+          - AttributeName: creatorId
+            AttributeType: S
+        GlobalSecondaryIndexes:
+          - IndexName: byPatientId
+            KeySchema:
+              - AttributeName: patientId
+                KeyType: HASH
+              - AttributeName: noteId
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+          - IndexName: byCreatorId
+            KeySchema:
+              - AttributeName: creatorId
+                KeyType: HASH
+              - AttributeName: noteId
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+        Tags:
+          - Key: Environment
+            Value: ${self:custom.stage}
+          - Key: Name
+            Value: notes-table
+    
+    PatientImagesBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: honeydew-patient-images
+        AccessControl: Private
+        NotificationConfiguration:
+            EventBridgeConfiguration:
+              EventBridgeEnabled: true
+        CorsConfiguration:
+          CorsRules:
+          - AllowedMethods:
+            - GET
+            - PUT
+            AllowedOrigins:
+            - "*"
+            AllowedHeaders:
+            - "*"
