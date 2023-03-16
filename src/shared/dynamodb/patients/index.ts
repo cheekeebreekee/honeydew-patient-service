@@ -1,0 +1,1 @@
+export { createPatient } from './create';

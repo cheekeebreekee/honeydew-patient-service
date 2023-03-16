@@ -5,12 +5,12 @@
         "patientId": $util.dynamodb.toDynamoDBJson($context.arguments.patientId)
     },
     "update" : {
-        "expression" : "set #actionItems = list_append(#actionItems, :actionItems)",
+        "expression" : "set #height = :height",
         "expressionNames" : {
-           "#actionItems" : "actionItems"
+           "#height" : "height"
        },
        "expressionValues" : {
-            ":actionItems" : $util.dynamodb.toDynamoDBJson($context.arguments.actionItems),
+            ":height" : $util.dynamodb.toDynamoDBJson($context.arguments.height)
        }
     }
 }

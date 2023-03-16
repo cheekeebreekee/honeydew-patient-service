@@ -5,4 +5,3 @@ build/
 servetlessEnvs/
 *.test.js
 test/
-src/functions/get-ipledge-embedded-link

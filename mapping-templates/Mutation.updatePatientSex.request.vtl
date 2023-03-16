@@ -5,12 +5,12 @@
         "patientId": $util.dynamodb.toDynamoDBJson($context.arguments.patientId)
     },
     "update" : {
-        "expression" : "set #status = :status",
+        "expression" : "set #sex = :sex",
         "expressionNames" : {
-           "#status" : "status"
+           "#sex" : "sex"
        },
        "expressionValues" : {
-            ":status" : $util.dynamodb.toDynamoDBJson($context.arguments.status),
+            ":sex" : $util.dynamodb.toDynamoDBJson($context.arguments.sex)
        }
     }
 }

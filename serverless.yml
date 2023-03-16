@@ -16,6 +16,7 @@ provider:
   profile: honeydewdev
   environment:
     STAGE: ${self:custom.stage}
+    PATIENTS_TABLE: ${file(./sls/variables.yml):${self:provider.stage}.PATIENTS_TABLE}
     AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
 
 package:

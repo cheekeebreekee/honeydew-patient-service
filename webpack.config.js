@@ -1,25 +1,25 @@
-const path = require("path");
-const slsw = require("serverless-webpack");
-const TerserPlugin = require("terser-webpack-plugin");
-const TsconfigPathsPlugin = require("tsconfig-paths-webpack-plugin");
+const path = require('path');
+const slsw = require('serverless-webpack');
+const TerserPlugin = require('terser-webpack-plugin');
+const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
-const folderName = "./.webpack/";
+const folderName = './.webpack/';
 
 module.exports = {
   entry: slsw.lib.entries,
   resolve: {
-    extensions: [".js", ".json", ".ts", ".tsx"],
+    extensions: ['.js', '.json', '.ts', '.tsx'],
     plugins: [new TsconfigPathsPlugin()],
     alias: {
       canvas: false,
     },
   },
   output: {
-    libraryTarget: "commonjs",
+    libraryTarget: 'commonjs',
     path: path.join(__dirname, `${folderName}`),
-    filename: "[name].js",
+    filename: '[name].js',
   },
-  mode: "production",
+  mode: 'production',
   optimization: {
     minimize: true,
     minimizer: [
@@ -32,29 +32,21 @@ module.exports = {
       }),
     ],
   },
-  externals: [
-    {
-      "aws-sdk": "commonjs aws-sdk",
-      "utf-8-validate": "commonjs utf-8-validate",
-      "chrome-aws-lambda": "commonjs chrome-aws-lambda",
-      handlebars: "commonjs handlebars",
-      "puppeteer-core": "commonjs puppeteer-core",
-    },
-  ],
-  target: "node",
-  devtool: "source-map",
+  externals: [/^@aws-sdk\//],
+  target: 'node',
+  devtool: 'source-map',
   module: {
     rules: [
       {
         test: /\.ts(x?)$/,
-        include: path.resolve(__dirname, "src"),
+        include: path.resolve(__dirname, 'src'),
         use: [
           {
-            loader: "ts-loader",
+            loader: 'ts-loader',
             options: {
               compilerOptions: {
-                module: "es6",
-                target: "es2017",
+                module: 'es6',
+                target: 'es2017',
               },
               transpileOnly: true,
             },

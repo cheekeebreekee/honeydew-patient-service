@@ -1,4 +1,4 @@
-name: PatientAppsync
+name: PatientAppSync
 schema: schema.api.graphql
 authenticationType: AMAZON_COGNITO_USER_POOLS
 userPoolConfig:
@@ -12,71 +12,49 @@ mappingTemplates:
     field: getMyProfile
     dataSource: patientsTable
   - type: Query
-    field: getMyAppointments
-    dataSource: appointmentsTable
-  - type: Query
-    field: getPatientAppointments
-    dataSource: appointmentsTable
-  - type: Query
     field: getPatient
     dataSource: patientsTable
   - type: Query
     field: getPatients
     dataSource: patientsTable
   - type: Query
-    field: getPatientByEmail
-    dataSource: patientsTable
-  - type: Query
-    field: getMyImages
-    dataSource: imagesTable
-  - type: Query
-    field: getPatientImages
-    dataSource: imagesTable
-  - type: Query
     field: getNotesByPatient
-    dataSource: notesTable
-  - type: Query
-    field: getNotesByCreator
     dataSource: notesTable
   - type: Query 
     field: getPresignedUrl
     dataSource: getPresignedUrlFunction
-    request: false
-    response: false
-
-
 
   # MUTATIONS 
-  # - type: Mutation
-  #   field: editMyProfile
-  #   dataSource: patientsTable
-  - type: Mutation
-    field: createAppointment
-    dataSource: createAppointmentFunction
-    request: false
-    response: false
-  - type: Mutation
-    field: changeAppointmentStatus
-    dataSource: appointmentsTable
-  - type: Mutation
-    field: createNote
-    dataSource: createNoteFunction
-    request: false
-    response: false
-  - type: Mutation
-    field: setPatientStatus
-    dataSource: patientsTable
-  - type: Mutation
-    field: createPatientActionItem
-    dataSource: patientsTable
   - type: Mutation
     field: setMeetingLink
-    dataSource: appointmentsTable
-
-  
-
-  # NESTED FIELDS
-
+    dataSource: patientsTable
+  - type: Mutation
+    field: updatePatientName
+    dataSource: patientsTable
+  - type: Mutation
+    field: updatePatientEmail
+    dataSource: patientsTable
+  - type: Mutation
+    field: updatePatientPhone
+    dataSource: patientsTable
+  - type: Mutation
+    field: updatePatientSex
+    dataSource: patientsTable
+  - type: Mutation
+    field: updatePatientDateOfBirth
+    dataSource: patientsTable
+  - type: Mutation
+    field: updatePatientHeight
+    dataSource: patientsTable
+  - type: Mutation
+    field: updatePatientWidth
+    dataSource: patientsTable
+  - type: Mutation
+    field: updatePatientParentInfo
+    dataSource: patientsTable
+  - type: Mutation
+    field: updatePatientShippingInfo
+    dataSource: patientsTable
 
 dataSources:
   - type: NONE
@@ -86,21 +64,9 @@ dataSources:
     config:
       tableName: !Ref PatientsTable
   - type: AMAZON_DYNAMODB
-    name: appointmentsTable
-    config:
-      tableName: !Ref AppointmentsTable
-  - type: AMAZON_DYNAMODB
     name: notesTable
     config:
       tableName: !Ref NotesTable
-  - type: AMAZON_DYNAMODB
-    name: imagesTable
-    config:
-      tableName: !Ref PatientImagesTable
-  - type: AWS_LAMBDA
-    name: createAppointmentFunction
-    config:  
-      functionName: createAppointment
   - type: AWS_LAMBDA
     name: getPresignedUrlFunction
     config:  
@@ -109,7 +75,3 @@ dataSources:
     name: createNoteFunction
     config:  
       functionName: createNote
-
-
-
-

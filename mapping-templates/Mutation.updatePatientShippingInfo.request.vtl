@@ -1,0 +1,16 @@
+{
+    "version" : "2018-05-29",
+    "operation" : "UpdateItem",
+    "key": {
+        "patientId": $util.dynamodb.toDynamoDBJson($context.arguments.patientId)
+    },
+    "update" : {
+        "expression" : "set #shippingInfo = :shippingInfo",
+        "expressionNames" : {
+           "#shippingInfo" : "shippingInfo"
+       },
+       "expressionValues" : {
+            ":shippingInfo" : $util.dynamodb.toDynamoDBJson($context.arguments.shippingInfo)
+       }
+    }
+}

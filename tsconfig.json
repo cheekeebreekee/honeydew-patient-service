@@ -3,8 +3,7 @@
     "target": "es2019",
     "module": "commonjs",
     "lib": [
-      "es2020",
-      "dom"
+      "es2020"
     ],
     "sourceMap": true,
     "outDir": "./build",
@@ -12,7 +11,7 @@
     "strict": true,
     "strictPropertyInitialization": false,
     "moduleResolution": "node",
-    "baseUrl": "./",
+    "baseUrl": "./src",
     "paths": {},
     "esModuleInterop": true,
     "experimentalDecorators": true
@@ -20,10 +19,6 @@
   "exclude": [
     "**/node_modules/**/*",
     "node_modules",
-    "./node_modules/*",
-    ".webpack"
-  ],
-  "include": [
-    "src"
-, "../acneaway-backend/src/services/pdf-generator.ts"  ]
+    "./node_modules/*"
+  ]
 }

@@ -1,0 +1,16 @@
+{
+    "version" : "2018-05-29",
+    "operation" : "UpdateItem",
+    "key": {
+        "patientId": $util.dynamodb.toDynamoDBJson($context.arguments.patientId)
+    },
+    "update" : {
+        "expression" : "set #phone = :phone",
+        "expressionNames" : {
+           "#phone" : "phone"
+       },
+       "expressionValues" : {
+            ":phone" : $util.dynamodb.toDynamoDBJson($context.arguments.phone)
+       }
+    }
+}
